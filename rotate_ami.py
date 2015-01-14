@@ -1,5 +1,6 @@
 import os, argparse
 from boto.ec2 import connect_to_region
+# magnus
 
 parser = argparse.ArgumentParser(description='This utility will rotate AMI')
 
@@ -24,27 +25,23 @@ print "Found %d images." % len(to_rotate)
 to_deregister = to_rotate[:-args.count]
 #to_keep = to_rotate[-args.count:]
 
-if len(to_deregister):
-    for image in to_deregister:
-
-        if len([key for key,val in image.tags.iteritems() if key=="build" and val=="latest"]) > 0:
-            if args.dryrun:
-                print "DRYRUN: would remove tag build=latest from "+image.id
-            else:
-                print "Removing tag build=latest from "+image.id
-                image.remove_tag("build","latest")
-
+for image in to_rotate:
+    if len([key for key,val in image.tags.iteritems() if key=="build" and val=="latest"]) > 0:
         if args.dryrun:
-            print "DRYRUN: would deregister "+image.id, image.name
+            print "DRYRUN: would remove tag build=latest from "+image.id
         else:
-            print "Deregister "+image.id, image.name
-            try:
-                image.deregister()
-            except Exception as e:
-                print "Failed to deregister "+image.id+": "+str(e)
-else:
-    print "No old AMI found."
+            print "Removing tag build=latest from "+image.id
+            image.remove_tag("build","latest")
 
+for image in to_deregister:
+    if args.dryrun:
+        print "DRYRUN: would deregister "+image.id, image.name
+    else:
+        print "Deregister "+image.id, image.name
+        try:
+            image.deregister()
+        except Exception as e:
+            print "Failed to deregister "+image.id+": "+str(e)
 
 if len(to_rotate) > 0:
     if args.dryrun:
